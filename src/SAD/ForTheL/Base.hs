@@ -32,9 +32,8 @@ import qualified SAD.Core.Message as Message
 
 type FTL = Parser FState
 
-
+-- What do the U and the M stand for?
 type UTerm   = (Formula -> Formula, Formula)
-
 type UNotion = (Formula -> Formula, Formula, VarName)
 
 type MTerm   = (Formula -> Formula, [Formula])
@@ -46,7 +45,7 @@ type VarName = (String, SourcePos)
 
 
 data FState = FState {
-  adjExpr, verExpr, notionExpr, sntExpr :: [Prim],
+  adjectiveExpr, verbExpr, notionExpr, sntExpr :: [Prim],
   cfnExpr, rfnExpr, lfnExpr, ifnExpr :: [Prim],
   cprExpr, rprExpr, lprExpr, iprExpr :: [Prim],
 
@@ -54,6 +53,8 @@ data FState = FState {
   idCount :: Int, hiddenCount :: Int, serialCounter :: Int,
   reports :: [Message.Report], pide :: Maybe PIDE }
 
+-- What do sn and sp (hence sntExpr and iprExpr) stand for?
+-- Why is "=" introduced in both?
 
 initFS :: Maybe PIDE -> FState
 initFS = FState
@@ -117,9 +118,9 @@ declared p = do (q, f, v) <- p; nv <- mapM makeDecl v; return (q, f, nv)
 
 primVer, primAdj, primUnAdj :: FTL UTerm -> FTL UTerm
 
-primVer = getExpr verExpr . primPrd
-primAdj = getExpr adjExpr . primPrd
-primUnAdj = getExpr (filter (unary . fst) . adjExpr) . primPrd
+primVer = getExpr verbExpr . primPrd
+primAdj = getExpr adjectiveExpr . primPrd
+primUnAdj = getExpr (filter (unary . fst) . adjectiveExpr) . primPrd
   where
     unary pt = Variable `notElem` pt
 
@@ -135,9 +136,9 @@ primPrd p (pt, fm) = do
 
 primMultiVer, primMultiAdj, primMultiUnAdj :: FTL UTerm -> FTL UTerm
 
-primMultiVer = getExpr verExpr . primMultiPrd
-primMultiAdj = getExpr adjExpr . primMultiPrd
-primMultiUnAdj = getExpr (filter (unary . fst) . adjExpr) . primMultiPrd
+primMultiVer = getExpr verbExpr . primMultiPrd
+primMultiAdj = getExpr adjectiveExpr . primMultiPrd
+primMultiUnAdj = getExpr (filter (unary . fst) . adjectiveExpr) . primMultiPrd
   where
     unary (Variable : pt) = Variable `notElem` pt
     unary (_  : pt) = unary pt

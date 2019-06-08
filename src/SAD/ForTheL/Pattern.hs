@@ -43,7 +43,7 @@ addExpr t@Trm {trName = 'i':'s':' ':_, trArgs = vs} f p st =
     n = idCount st;
     (pt, nf) = extractWordPattern st (giveId p n t) f
     fm  = substs nf $ map trName vs
-    ns  = st { adjExpr = (pt, fm) : adjExpr st, idCount = incId p n}
+    ns  = st { adjectiveExpr = (pt, fm) : adjectiveExpr st, idCount = incId p n}
 
 addExpr t@Trm {trName = 'd':'o':' ':_, trArgs = vs} f p st =
   MS.put ns >> return nf
@@ -51,7 +51,7 @@ addExpr t@Trm {trName = 'd':'o':' ':_, trArgs = vs} f p st =
     n = idCount st;
     (pt, nf) = extractWordPattern st (giveId p n t) f
     fm = substs nf $ map trName vs
-    ns = st {verExpr = (pt, fm) : verExpr st, idCount = incId p n}
+    ns = st {verbExpr = (pt, fm) : verbExpr st, idCount = incId p n}
 
 addExpr t@Trm {trName = 'm':'i':'s':' ':_, trArgs = vs} f p st =
   MS.put ns >> return nf
@@ -60,7 +60,7 @@ addExpr t@Trm {trName = 'm':'i':'s':' ':_, trArgs = vs} f p st =
     ((hp:tp), nf) = extractWordPattern st (giveId p n t) f
     pt = hp : Word [] : Variable : tp
     fm = substs nf $ map trName vs
-    ns = st {adjExpr = (pt, fm) : adjExpr st, idCount = incId p n}
+    ns = st {adjectiveExpr = (pt, fm) : adjectiveExpr st, idCount = incId p n}
 
 addExpr t@Trm {trName = 'm':'d':'o':' ':_, trArgs = vs} f p st =
   MS.put ns >> return nf
@@ -69,7 +69,7 @@ addExpr t@Trm {trName = 'm':'d':'o':' ':_, trArgs = vs} f p st =
     ((hp:tp), nf) = extractWordPattern st (giveId p n t) f
     pt = hp : Word [] : Variable : tp
     fm = substs nf $ map trName vs
-    ns = st {verExpr = (pt, fm) : verExpr st, idCount = incId p n}
+    ns = st {verbExpr = (pt, fm) : verbExpr st, idCount = incId p n}
 
 addExpr t@Trm {trName = 'a':' ':_, trArgs = vs} f p st =
   MS.put ns >> return nf

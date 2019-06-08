@@ -29,6 +29,7 @@ import Data.Function ((&))
 import Control.Monad (ap, liftM2, guard)
 
 -- see the ForTheL paper, page 12-13
+-- Note that FTL Formula is the same as Parser FState Formula
 statement :: FTL Formula
 statement = headed <|> chained
 
@@ -248,6 +249,9 @@ term = label "a term" $ (quantifiedNotion >>= m2s) -|- definiteTerm
   where
     m2s (q, [t]) = return (q, t)
     m2s _ = fail "inadmissible multinamed notion"
+
+-- TODO understand <|>
+-- TODO understand -|-
 
 quantifiedNotion :: FTL (Formula -> Formula, [Formula])
 quantifiedNotion = label "quantified notion" $
