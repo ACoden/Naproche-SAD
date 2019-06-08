@@ -256,7 +256,6 @@ term = label "a term" $ (quantifiedNotion >>= m2s) -|- definiteTerm
     m2s (q, [t]) = return (q, t)
     m2s _ = fail "inadmissible multinamed notion"
 
--- TODO understand <|>
 -- TODO understand -|-
 
 quantifiedNotion :: FTL (Formula -> Formula, [Formula])
@@ -294,6 +293,12 @@ symbolicTerm = fmap ((,) id) sTerm
 
 --- symbolic notation
 
+-- TODO: I don't understand why sForm = sIff instead of having many kinds of symbolic
+-- statements as defined in the ForTheL paper, page 12:
+-- symbStatement -> forall classRelation symbStatement
+--                | exists classRelation symbStatement
+--                | symbStatement <=> symbStatement
+--                | etc.
 sForm :: FTL Formula
 sForm  = sIff
   where
