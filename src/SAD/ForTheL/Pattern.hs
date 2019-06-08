@@ -58,7 +58,7 @@ addExpr t@Trm {trName = 'm':'i':'s':' ':_, trArgs = vs} f p st =
   where
     n = idCount st;
     ((hp:tp), nf) = extractWordPattern st (giveId p n t) f
-    pt = hp : Wd [] : Vr : tp
+    pt = hp : Word [] : Variable : tp
     fm = substs nf $ map trName vs
     ns = st {adjExpr = (pt, fm) : adjExpr st, idCount = incId p n}
 
@@ -67,7 +67,7 @@ addExpr t@Trm {trName = 'm':'d':'o':' ':_, trArgs = vs} f p st =
   where
     n = idCount st;
     ((hp:tp), nf) = extractWordPattern st (giveId p n t) f
-    pt = hp : Wd [] : Vr : tp
+    pt = hp : Word [] : Variable : tp
     fm = substs nf $ map trName vs
     ns = st {verExpr = (pt, fm) : verExpr st, idCount = incId p n}
 
@@ -95,8 +95,8 @@ addExpr Trm {trName = "=", trArgs = [_, t]} eq@Trm {trName = "="} p st =
     (pt, nf) = extractSymbPattern (giveId p n t) f
     fm = substs nf $ map trName vs
     -- classification of pattern
-    csm = lsm && rsm; lsm = notVr (head pt); rsm = notVr (last pt)
-    notVr Vr = False; notVr _ = True
+    csm = lsm && rsm; lsm = notVariable (head pt); rsm = notVariable (last pt)
+    notVariable Variable = False; notVariable _ = True
     -- add to the right category
     ns | csm = st {cfnExpr = (pt, fm) : cfnExpr st}
        | lsm = st {lfnExpr = (init pt, fm) : lfnExpr st}
@@ -113,8 +113,8 @@ addExpr t@Trm {trName = s, trArgs = vs} f p st =
     (pt, nf) = extractSymbPattern (giveId p n t) f
     fm = substs nf $ map trName vs
     -- classification of pattern
-    csm = lsm && rsm; lsm = notVr (head pt); rsm = notVr (last pt)
-    notVr Vr = False; notVr _ = True
+    csm = lsm && rsm; lsm = notVariable (head pt); rsm = notVariable (last pt)
+    notVariable Variable = False; notVariable _ = True
     -- add the pattern to the right category
     ns | csm = st {cprExpr = (pt, fm) : cprExpr st}
        | lsm = st {lprExpr = (init pt, fm) : lprExpr st}
@@ -141,11 +141,11 @@ extractWordPattern st t@Trm {trName = s, trArgs = vs} f = (pt, nf)
     (pr:ws) = words s
     dict = strSyms st
 
-    getPatt "." = Nm
-    getPatt "#" = Vr
-    getPatt w = Wd $ foldl union [w] $ filter (elem w) dict
+    getPatt "." = Numeric
+    getPatt "#" = Variable
+    getPatt w = Word $ foldl union [w] $ filter (elem w) dict
 
-    getName (Wd ((c:cs):_):ls) = toUpper c : cs ++ getName ls
+    getName (Word ((c:cs):_):ls) = toUpper c : cs ++ getName ls
     getName (_:ls) = getName ls
     getName [] = ""
 
@@ -156,11 +156,11 @@ extractSymbPattern t@Trm {trName = s, trArgs = vs} f = (pt, nf)
     nt = t {trName ='s' : getName pt}
     nf = replace nt t {trId = newId} f
 
-    getPatt "#" = Vr
-    getPatt w = Sm w
+    getPatt "#" = Variable
+    getPatt w = Symbol w
 
-    getName (Sm s:ls) = symEncode s ++ getName ls
-    getName (Vr:ls) = symEncode "." ++ getName ls
+    getName (Symbol s:ls) = symEncode s ++ getName ls
+    getName (Variable:ls) = symEncode "." ++ getName ls
     getName [] = ""
 
 

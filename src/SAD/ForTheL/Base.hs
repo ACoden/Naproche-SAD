@@ -64,24 +64,24 @@ initFS = FState
   0 0 0 []
   where
     eq = [
-      ([Wd ["equal"], Wd ["to"], Vr], zTrm (-1) "="),
-      ([Wd ["nonequal"], Wd ["to"], Vr], Not . zTrm (-1) "=") ]
+      ([Word ["equal"], Word ["to"], Variable], zTrm (-1) "="),
+      ([Word ["nonequal"], Word ["to"], Variable], Not . zTrm (-1) "=") ]
     sp = [
-      ([Sm "="], zTrm (-1) "="),
-      ([Sm "!", Sm "="], Not . zTrm (-1) "="),
-      ([Sm "-", Sm "<", Sm "-"], zTrm (-2) "iLess"),
-      ([Sm "-~-"], \(m:n:_) -> zAll "" $
+      ([Symbol "="], zTrm (-1) "="),
+      ([Symbol "!", Symbol "="], Not . zTrm (-1) "="),
+      ([Symbol "-", Symbol "<", Symbol "-"], zTrm (-2) "iLess"),
+      ([Symbol "-~-"], \(m:n:_) -> zAll "" $
         Iff (zElem (zVar "") m) (zElem (zVar "") n)) ]
-    sn = [ ([Sm "=", Vr], zTrm (-1) "=") ]
+    sn = [ ([Symbol "=", Variable], zTrm (-1) "=") ]
     nt = [
-      ([Wd ["function","functions"], Nm], zFun . head),
-      ([Wd ["set","sets"], Nm], zSet . head),
-      ([Wd ["element", "elements"], Nm, Wd ["of"], Vr], \(x:m:_) -> zElem x m),
-      ([Wd ["object", "objects"], Nm], zObj . head)]
-    rf = [ ([Sm "[", Vr, Sm "]"], \(f:x:_) -> zApp f x)]
+      ([Word ["function","functions"], Numeric], zFun . head),
+      ([Word ["set","sets"], Numeric], zSet . head),
+      ([Word ["element", "elements"], Numeric, Word ["of"], Variable], \(x:m:_) -> zElem x m),
+      ([Word ["object", "objects"], Numeric], zObj . head)]
+    rf = [ ([Symbol "[", Variable, Symbol "]"], \(f:x:_) -> zApp f x)]
     cf = [
-      ([Sm "Dom", Sm "(",Vr,Sm ")"], zDom . head),
-      ([Sm "(", Vr, Sm ",", Vr, Sm ")"], \(x:y:_) -> zPair x y) ]
+      ([Symbol "Dom", Symbol "(",Variable,Symbol ")"], zDom . head),
+      ([Symbol "(", Variable, Symbol ",", Variable, Symbol ")"], \(x:y:_) -> zPair x y) ]
 
 
 
@@ -121,7 +121,7 @@ primVer = getExpr verExpr . primPrd
 primAdj = getExpr adjExpr . primPrd
 primUnAdj = getExpr (filter (unary . fst) . adjExpr) . primPrd
   where
-    unary pt = Vr `notElem` pt
+    unary pt = Variable `notElem` pt
 
 primPrd :: Parser st (b1 -> b1, Formula)
         -> ([Patt], [Formula] -> b2)
@@ -139,7 +139,7 @@ primMultiVer = getExpr verExpr . primMultiPrd
 primMultiAdj = getExpr adjExpr . primMultiPrd
 primMultiUnAdj = getExpr (filter (unary . fst) . adjExpr) . primMultiPrd
   where
-    unary (Vr : pt) = Vr `notElem` pt
+    unary (Variable : pt) = Variable `notElem` pt
     unary (_  : pt) = unary pt
     unary _ = True
 
@@ -221,36 +221,38 @@ primSnt p  = noError $ varlist >>= getExpr sntExpr . snt
 
 
 
--- TODO: Give these longer names. Do they mean the following?
---         Wd ~> Word
---         Sm ~> Symbol
---         Vr ~> Variable
---         Nm ~> Name / Nomen / Numeric
-data Patt = Wd [String] | Sm String | Vr | Nm deriving (Eq, Show)
+--See page 6 of the ForTheL paper. What the paper calls Pattern and SymbPattern are 
+--implemented here as [Patt]. 
+
+--I'm not 100% sure that Nm was supposed to be read as Numeric rather than Name,
+--but neither makes a lot of sense as a constructor without arguments
+--I think it is just a placeholder, like Variable, but the role of Nm is unclear by 
+--looking at the ForTheL paper
+data Patt = Word [String] | Symbol String | Variable | Numeric deriving (Eq, Show)
 
 
 samePat :: [Patt] -> [Patt] -> Bool
 samePat [] [] = True
-samePat (Wd ls : rst1) (Wd rs : rst2) =
+samePat (Word ls : rst1) (Word rs : rst2) =
   all (`elem` rs) ls && samePat rst1 rst2
-samePat (Vr : rst1) (Vr : rst2) = samePat rst1 rst2
-samePat (Nm : rst1) (Nm : rst2) = samePat rst1 rst2
-samePat (Sm s : rst1) (Sm t : rst2) = s == t && samePat rst1 rst2
+samePat (Variable : rst1) (Variable : rst2) = samePat rst1 rst2
+samePat (Numeric : rst1) (Numeric : rst2) = samePat rst1 rst2
+samePat (Symbol s : rst1) (Symbol t : rst2) = s == t && samePat rst1 rst2
 samePat _ _ = False
 
 
 -- adding error reporting to pattern parsing
-patternWdTokenOf :: [String] -> Parser st ()
-patternWdTokenOf l = label ("a word of " ++ show l) $ wdTokenOf l
+patternWordTokenOf :: [String] -> Parser st ()
+patternWordTokenOf l = label ("a word of " ++ show l) $ wdTokenOf l
 
-patternSmTokenOf :: String -> Parser st ()
-patternSmTokenOf l = label ("the symbol " ++ show l) $ smTokenOf l
+patternSymbolTokenOf :: String -> Parser st ()
+patternSymbolTokenOf l = label ("the symbol " ++ show l) $ smTokenOf l
 
 -- most basic pattern parser: simply follow the pattern and parse terms with p
 -- at variable places
 wdPatt :: Parser st (b -> b, a) -> [Patt] -> Parser st (b -> b, [a])
-wdPatt p (Wd l : ls) = patternWdTokenOf l >> wdPatt p ls
-wdPatt p (Vr : ls) = do
+wdPatt p (Word l : ls) = patternWordTokenOf l >> wdPatt p ls
+wdPatt p (Variable : ls) = do
   (r, t) <- p
   (q, ts) <- wdPatt p ls
   return (r . q, t:ts)
@@ -259,26 +261,26 @@ wdPatt _ _ = mzero
 
 -- parses a symbolic pattern
 smPatt :: Parser st a -> [Patt] -> Parser st [a]
-smPatt p (Vr : ls) = liftM2 (:) p $ smPatt p ls
-smPatt p (Sm s : ls) = patternSmTokenOf s >> smPatt p ls
+smPatt p (Variable : ls) = liftM2 (:) p $ smPatt p ls
+smPatt p (Symbol s : ls) = patternSymbolTokenOf s >> smPatt p ls
 smPatt _ [] = return []
 smPatt _ _ = mzero
 
 -- parses a multi-subject pattern: follow the pattern, but ignore the wdToken
 -- right before the first variable. Then check that all "and" tokens have been
--- consumed. Example pattern: [Wd ["commute","commutes"], Wd ["with"], Vr]. Then
+-- consumed. Example pattern: [Word ["commute","commutes"], Word ["with"], Variable]. Then
 -- we can parse "a commutes with c and d" as well as "a and b commute".
 mlPatt :: Parser st (b -> b, a) -> [Patt] -> Parser st (b -> b, [a])
-mlPatt p (Wd l :_: Vr : ls) = patternWdTokenOf l >> naPatt p ls
-mlPatt p (Wd l : ls) = patternWdTokenOf l >> mlPatt p ls
+mlPatt p (Word l :_: Variable : ls) = patternWordTokenOf l >> naPatt p ls
+mlPatt p (Word l : ls) = patternWordTokenOf l >> mlPatt p ls
 mlPatt _ _ = mzero
 
 
 -- parses a notion: follow the pattern to the name place, record names,
 -- then keep following the pattern
 ntPatt :: FTL (b -> b, a) -> [Patt] -> FTL (b -> b, [(String, SourcePos)], [a])
-ntPatt p (Wd l : ls) = patternWdTokenOf l >> ntPatt p ls
-ntPatt p (Nm : ls) = do
+ntPatt p (Word l : ls) = patternWordTokenOf l >> ntPatt p ls
+ntPatt p (Numeric : ls) = do
   vs <- namlist
   (q, ts) <- wdPatt p ls
   return (q, vs, ts)
@@ -287,8 +289,8 @@ ntPatt _ _ = mzero
 -- parse an "of"-notion: follow the pattern to the notion name, then check that
 -- "of" follows the name followed by a variable that is not followed by "and"
 ofPatt :: FTL (b -> b, a) -> [Patt] -> FTL (b -> b, [(String, SourcePos)], [a])
-ofPatt p (Wd l : ls) = patternWdTokenOf l >> ofPatt p ls
-ofPatt p (Nm : Wd l : Vr : ls) = do
+ofPatt p (Word l : ls) = patternWordTokenOf l >> ofPatt p ls
+ofPatt p (Numeric : Word l : Variable : ls) = do
   guard $ elem "of" l; vs <- namlist
   (q, ts) <- naPatt p ls
   return (q, vs, ts)
@@ -301,9 +303,9 @@ cmPatt :: FTL (b -> b, a1)
        -> FTL (b -> c, [a2])
        -> [Patt]
        -> FTL (b -> c, [(String, SourcePos)], [a2], [a1])
-cmPatt p s (Wd l:ls) = patternWdTokenOf l >> cmPatt p s ls
-cmPatt p s (Nm : Wd l : Vr : ls) = do
-  guard $ elem "of" l; vs <- namlist; patternWdTokenOf l
+cmPatt p s (Word l:ls) = patternWordTokenOf l >> cmPatt p s ls
+cmPatt p s (Numeric : Word l : Variable : ls) = do
+  guard $ elem "of" l; vs <- namlist; patternWordTokenOf l
   (r, as) <- s
   when (null $ tail as) $ fail "several objects expected for `common'"
   (q, ts) <- naPatt p ls
@@ -313,7 +315,7 @@ cmPatt _ _ _ = mzero
 -- an auxiliary pattern parser that checks that we are not dealing wiht an "and"
 -- wdToken and then continues to follow the pattern
 naPatt :: Parser st (b -> b, a) -> [Patt] -> Parser st (b -> b, [a])
-naPatt p (Wd l : ls) = guard ("and" `notElem` l) >> patternWdTokenOf l >> wdPatt p ls
+naPatt p (Word l : ls) = guard ("and" `notElem` l) >> patternWordTokenOf l >> wdPatt p ls
 naPatt p ls = wdPatt p ls
 
 

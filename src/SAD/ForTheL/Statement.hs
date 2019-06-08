@@ -489,7 +489,7 @@ pair :: FTL Formula
 pair = sVar </> pr
   where
     pr = do [l,r] <- smPatt pair pairPattern; return $ zPair l r
-    pairPattern = [Sm "(", Vr, Sm ",", Vr, Sm ")"]
+    pairPattern = [Symbol "(", Variable, Symbol ",", Variable, Symbol ")"]
 
 lambdaIn :: FTL (Formula, Formula -> Formula -> Formula, Formula -> Formula)
 lambdaIn = do
