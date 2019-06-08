@@ -28,7 +28,7 @@ import qualified SAD.Data.Text.Decl as Decl
 import Data.Function ((&))
 import Control.Monad (ap, liftM2, guard)
 
-
+-- see the ForTheL paper, page 12-13
 statement :: FTL Formula
 statement = headed <|> chained
 
@@ -105,8 +105,8 @@ simple = label "simple statement" $ do
 smForm :: FTL Formula
 smForm = liftM2 (flip ($)) (sForm -|- classEq) $ optLL1 id quChain
 
---- predicates
-
+-- predicates
+-- see the ForTheL paper, page 10
 doesPredicate :: FTL Formula
 doesPredicate = label "does predicate" $
   (does >> (doP -|- multiDoP)) <|> hasP <|> isChain
@@ -178,10 +178,11 @@ mPredicate p = (wdToken "not" >> mNegative) <|> mPositive
 
 
 
---- notions
-
+-- notions
+-- see the ForTheL paper, page 7, even though they don't seem to correspond well to 
+-- what is implemented here
 basentn :: FTL (Formula -> Formula, Formula, [VarName])
-basentn = fmap digadd $ cm <|> symEqnt <|> (set </> primNtn term)
+basentn = fmap digadd $ cm <|> symEqnt <|> (set </> primNotion term)
   where
     cm = wdToken "common" >> primCmNtn term terms
     symEqnt = do
@@ -214,7 +215,7 @@ notion :: FTL (Formula -> Formula, Formula, [(String, SourcePos)])
 notion = label "notion" $ gnotion (basentn </> symNotion) stattr >>= digntn
 
 possess :: FTL (Formula -> Formula, Formula, [(String, SourcePos)])
-possess = label "possesive notion" $ gnotion (primOfNtn term) stattr >>= digntn
+possess = label "possesive notion" $ gnotion (primOfNotion term) stattr >>= digntn
 
 stattr :: FTL Formula
 stattr = label "such-that attribute" $ such >> that >> statement
@@ -231,25 +232,25 @@ single :: Monad m => (a, b, [c]) -> m (a, b, c)
 single (q, f, [v]) = return (q, f, v)
 single _ = fail "inadmissible multinamed notion"
 
---- terms
-
+-- terms
+-- see the ForTheL paper, page 9
 terms :: FTL (Formula -> Formula, [Formula])
 terms = label "terms" $
   fmap (foldl1 fld) $ m_term `sepBy` comma
   where
-    m_term = quNotion -|- fmap s2m definiteTerm
+    m_term = quantifiedNotion -|- fmap s2m definiteTerm
     s2m (q, t) = (q, [t])
 
     fld (q, ts) (r, ss) = (q . r, ts ++ ss)
 
 term :: FTL (Formula -> Formula, Formula)
-term = label "a term" $ (quNotion >>= m2s) -|- definiteTerm
+term = label "a term" $ (quantifiedNotion >>= m2s) -|- definiteTerm
   where
     m2s (q, [t]) = return (q, t)
     m2s _ = fail "inadmissible multinamed notion"
 
-quNotion :: FTL (Formula -> Formula, [Formula])
-quNotion = label "quantified notion" $
+quantifiedNotion :: FTL (Formula -> Formula, [Formula])
+quantifiedNotion = label "quantified notion" $
   paren (fa <|> ex <|> no)
   where
     fa = do
@@ -515,7 +516,7 @@ conjChain :: Parser st Formula -> Parser st Formula
 conjChain = fmap (foldl1 And) . flip sepBy (wdToken "and")
 
 quChain :: FTL (Formula -> Formula)
-quChain = fmap (foldl fld id) $ wdToken "for" >> quNotion `sepByLL1` comma
+quChain = fmap (foldl fld id) $ wdToken "for" >> quantifiedNotion `sepByLL1` comma
 -- we can use LL1 here, since there must always follow a parser belonging to the
 -- same non-terminal
   where

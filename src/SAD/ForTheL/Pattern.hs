@@ -77,7 +77,7 @@ addExpr t@Trm {trName = 'a':' ':_, trArgs = vs} f p st =
     n = idCount st;
     (pt, nf) = extractWordPattern st (giveId p n t) f
     fm = substs nf $ map trName vs
-    ns = st {ntnExpr = (pt, fm) : ntnExpr st, idCount = incId p n}
+    ns = st {notionExpr = (pt, fm) : notionExpr st, idCount = incId p n}
 
 addExpr Trm {trName= "=", trArgs = [v, t@Trm {trName = 'a':' ':rs}]} f p st =
   MS.put ns >> return nf
@@ -85,7 +85,7 @@ addExpr Trm {trName= "=", trArgs = [v, t@Trm {trName = 'a':' ':rs}]} f p st =
     n = idCount st; vs = trArgs t
     (pt, nf) = extractWordPattern st (giveId p n t {trName = "tthe " ++ rs}) f
     fm = substs nf $ map trName (v:vs)
-    ns = st {ntnExpr = (pt, fm) : ntnExpr st, idCount = incId p n}
+    ns = st {notionExpr = (pt, fm) : notionExpr st, idCount = incId p n}
 
 addExpr Trm {trName = "=", trArgs = [_, t]} eq@Trm {trName = "="} p st =
   MS.put nn >> return (zEqu v nf)

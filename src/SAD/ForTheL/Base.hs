@@ -46,7 +46,7 @@ type VarName = (String, SourcePos)
 
 
 data FState = FState {
-  adjExpr, verExpr, ntnExpr, sntExpr :: [Prim],
+  adjExpr, verExpr, notionExpr, sntExpr :: [Prim],
   cfnExpr, rfnExpr, lfnExpr, ifnExpr :: [Prim],
   cprExpr, rprExpr, lprExpr, iprExpr :: [Prim],
 
@@ -153,31 +153,31 @@ primMultiPrd p (pt, fm) = do
 
 -- Notions and functions
 
-primNtn, primOfNtn :: FTL UTerm -> FTL MNotion
+primNotion, primOfNotion :: FTL UTerm -> FTL MNotion
 
-primNtn p  = getExpr ntnExpr ntn
+primNotion p  = getExpr notionExpr notion
   where
-    ntn (pt, fm) = do
+   notion (pt, fm) = do
       (q, vs, ts) <- ntPatt p pt
       return (q, fm $ zHole:ts, vs)
 
-primOfNtn p = getExpr ntnExpr ntn
+primOfNotion p = getExpr notionExpr notion
   where
-    ntn (pt, fm) = do
+   notion (pt, fm) = do
       (q, vs, ts) <- ofPatt p pt
       let fn v = fm $ (pVar v):zHole:ts
       return (q, foldr1 And $ map fn vs, vs)
 
 primCmNtn :: FTL UTerm -> FTL MTerm -> FTL MNotion
-primCmNtn p s = getExpr ntnExpr ntn
+primCmNtn p s = getExpr notionExpr notion
   where
-    ntn (pt, fm) = do
+   notion (pt, fm) = do
       (q, vs, as, ts) <- cmPatt p s pt
       let fn v = fm $ zHole:v:ts
       return (q, foldr1 And $ map fn as, vs)
 
 primFun :: FTL UTerm -> FTL UTerm
-primFun  = (>>= fun) . primNtn
+primFun  = (>>= fun) . primNotion
   where
     fun (q, Trm {trName = "=", trArgs = [_, t]}, _)
       | not (occursH t) = return (q, t)
