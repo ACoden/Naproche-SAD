@@ -72,11 +72,15 @@ chainEnd f = optLL1 f $ and_st <|> or_st <|> iff_st <|> where_st
       markupTokenOf Reports.whenWhere ["when", "where"]; y <- statement
       return $ foldr zAll (Imp y f) (declNames [] y)
 
+-- Atomic statements are called primitive in the ForTheL paper (see page 12)
+-- primaryStatement -> simpleStatement | thereIsStatement | [we have] symbStatement
+--                       | [we have] constStatement
+-- The way it is implemented here doesn't seem to correspond well to what is in the paper 
 atomic :: FTL Formula
 atomic = label "atomic statement"
-  thereIs <|> (simple </> (wehve >> smForm <|> thesis))
+  thereIs <|> (simple </> (wehave >> smForm <|> thesis))
   where
-    wehve = optLL1 () $ wdToken "we" >> wdToken "have"
+    wehave = optLL1 () $ wdToken "we" >> wdToken "have"
 
 thesis :: FTL Formula
 thesis = art >> (thes <|> contrary <|> contradiction)
@@ -85,6 +89,7 @@ thesis = art >> (thes <|> contrary <|> contradiction)
     contrary = wdToken "contrary" >> return (Not zThesis)
     contradiction = wdToken "contradiction" >> return Bot
 
+-- "there is" statements assert the nonemptiness of some notions's classes
 thereIs :: FTL Formula
 thereIs = label "there-is statement" $ there >> (noNotion -|- notions)
   where
@@ -94,7 +99,7 @@ thereIs = label "there-is statement" $ there >> (noNotion -|- notions)
     notions = fmap multExi $ art >> declared notion `sepBy` comma
 
 
-
+-- simple statements apply predicates to terms
 simple :: FTL Formula
 simple = label "simple statement" $ do
   (q, ts) <- terms; p <- conjChain doesPredicate;
@@ -103,6 +108,7 @@ simple = label "simple statement" $ do
   -- example: x = y *for every real number x*.
   q . q' <$> dig p ts
 
+-- TODO: understand what smForm does
 smForm :: FTL Formula
 smForm = liftM2 (flip ($)) (sForm -|- classEq) $ optLL1 id quChain
 
@@ -112,8 +118,8 @@ doesPredicate :: FTL Formula
 doesPredicate = label "does predicate" $
   (does >> (doP -|- multiDoP)) <|> hasP <|> isChain
   where
-    doP = predicate primVer
-    multiDoP = mPredicate primMultiVer
+    doP = predicate primVerb
+    multiDoP = mPredicate primMultiVerb
     hasP = has >> hasPredicate
     isChain = is  >> conjChain (isAPredicate -|- isPredicate)
 
@@ -121,12 +127,12 @@ isPredicate :: FTL Formula
 isPredicate = label "is predicate" $
   pAdj -|- pMultiAdj -|- (with >> hasPredicate)
   where
-    pAdj = predicate primAdj
-    pMultiAdj = mPredicate primMultiAdj
+    pAdj = predicate primAdjective
+    pMultiAdj = mPredicate primMultiAdjective
 
 isAPredicate :: FTL Formula
 isAPredicate = label "isA predicate" $ notNtn <|> ntn
-  -- Unlike the langugae description, we distinguish positive and negative
+  -- Unlike the language description, we distinguish positive and negative
   -- rather than notions and fixed terms
   where
     ntn = fmap (uncurry ($)) anotion
@@ -255,14 +261,14 @@ term = label "a term" $ (quantifiedNotion >>= m2s) -|- definiteTerm
 
 quantifiedNotion :: FTL (Formula -> Formula, [Formula])
 quantifiedNotion = label "quantified notion" $
-  paren (fa <|> ex <|> no)
+  paren (forall <|> exists <|> no)
   where
-    fa = do
+    forall = do
       wdTokenOf ["every", "each", "all", "any"]; (q, f, v) <- notion
       vDecl <- mapM makeDecl v
       return (q . flip (foldr dAll) vDecl . blImp f, map pVar v)
 
-    ex = do
+    exists = do
       wdToken "some"; (q, f, v) <- notion
       vDecl <- mapM makeDecl v
       return (q . flip (foldr dExi) vDecl . blAnd f, map pVar v)

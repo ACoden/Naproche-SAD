@@ -81,7 +81,7 @@ initFS = FState
       ([Word ["object", "objects"], Numeric], zObj . head)]
     rf = [ ([Symbol "[", Variable, Symbol "]"], \(f:x:_) -> zApp f x)]
     cf = [
-      ([Symbol "Dom", Symbol "(",Variable,Symbol ")"], zDom . head),
+      ([Symbol "Dom", Symbol "(", Variable , Symbol ")"], zDom . head),
       ([Symbol "(", Variable, Symbol ",", Variable, Symbol ")"], \(x:y:_) -> zPair x y) ]
 
 
@@ -115,17 +115,18 @@ declared :: FTL MNotion -> FTL (Formula -> Formula, Formula, [Decl])
 declared p = do (q, f, v) <- p; nv <- mapM makeDecl v; return (q, f, nv)
 
 -- Predicates: verbs and adjectives
+-- see the ForTheL paper, page 10
+-- primVerb and primAdjective are in the ForTheL paper, TODO: understand what is 
+-- primUnAdj supposed to be
+primVerb, primAdjective, primUnAdj :: FTL UTerm -> FTL UTerm
 
-primVer, primAdj, primUnAdj :: FTL UTerm -> FTL UTerm
-
-primVer = getExpr verbExpr . primPrd
-primAdj = getExpr adjectiveExpr . primPrd
-primUnAdj = getExpr (filter (unary . fst) . adjectiveExpr) . primPrd
+primVerb      = getExpr verbExpr . primPrd
+primAdjective = getExpr adjectiveExpr . primPrd
+primUnAdj     = getExpr (filter (unary . fst) . adjectiveExpr) . primPrd
   where
     unary pt = Variable `notElem` pt
 
-primPrd :: Parser st (b1 -> b1, Formula)
-        -> ([Patt], [Formula] -> b2)
+primPrd :: Parser st (b1 -> b1, Formula) -> ([Patt], [Formula] -> b2) 
         -> Parser st (b1 -> b1, b2)
 primPrd p (pt, fm) = do
   (q, ts) <- wdPatt p pt
@@ -133,19 +134,19 @@ primPrd p (pt, fm) = do
 
 
 -- Multi-subject predicates: [a,b are] equal
+-- TODO: udnerstand what is primMultiUnAdj supposed to be
 
-primMultiVer, primMultiAdj, primMultiUnAdj :: FTL UTerm -> FTL UTerm
+primMultiVerb, primMultiAdjective, primMultiUnAdj :: FTL UTerm -> FTL UTerm
 
-primMultiVer = getExpr verbExpr . primMultiPrd
-primMultiAdj = getExpr adjectiveExpr . primMultiPrd
-primMultiUnAdj = getExpr (filter (unary . fst) . adjectiveExpr) . primMultiPrd
+primMultiVerb      = getExpr verbExpr . primMultiPrd
+primMultiAdjective = getExpr adjectiveExpr . primMultiPrd
+primMultiUnAdj     = getExpr (filter (unary . fst) . adjectiveExpr) . primMultiPrd
   where
     unary (Variable : pt) = Variable `notElem` pt
     unary (_  : pt) = unary pt
     unary _ = True
 
-primMultiPrd :: Parser st (b1 -> b1, Formula)
-            -> ([Patt], [Formula] -> b2)
+primMultiPrd :: Parser st (b1 -> b1, Formula) -> ([Patt], [Formula] -> b2)
             -> Parser st (b1 -> b1, b2)
 primMultiPrd p (pt, fm) = do
   (q, ts) <- mlPatt p pt
@@ -373,7 +374,7 @@ freeVarPositions f = do
 
 --- decl
 
-{- produce the variables delcared by a formula together with their positions. As
+{- produce the variables declared by a formula together with their positions. As
 parameter we pass the already known variables-}
 decl :: [String] -> Formula -> [VarName]
 decl vs = dive
@@ -435,7 +436,7 @@ is = wdTokenOf ["is", "be", "are"]
 art = opt () $ wdTokenOf ["a","an","the"]
 an = wdTokenOf ["a", "an"]
 the = wdToken "the"
-iff = wdToken "iff" <|> mapM_ wdToken ["if", "and", "only", "if"]
+iff = wdToken "iff" <|> mapM_ wdToken ["if", "and", "only", "if"] -- TODO: Is the second "if" a typo?
 that = wdToken "that"
 standFor = wdToken "denote" <|> (wdToken "stand" >> wdToken "for")
 arrow = symbol "->"
