@@ -72,7 +72,7 @@ chainEnd f = optLL1 f $ and_st <|> or_st <|> iff_st <|> where_st
       markupTokenOf Reports.whenWhere ["when", "where"]; y <- statement
       return $ foldr zAll (Imp y f) (declNames [] y)
 
--- Atomic statements are called primitive in the ForTheL paper (see page 12)
+-- Atomic statements are called primary in the ForTheL paper (see page 12)
 -- primaryStatement -> simpleStatement | thereIsStatement | [we have] symbStatement
 --                       | [we have] constStatement
 -- The way it is implemented here doesn't seem to correspond well to what is in the paper 
@@ -82,6 +82,7 @@ atomic = label "atomic statement"
   where
     wehave = optLL1 () $ wdToken "we" >> wdToken "have"
 
+-- The type thesis is called constStatement in the ForTheL paper, see page 13
 thesis :: FTL Formula
 thesis = art >> (thes <|> contrary <|> contradiction)
   where
@@ -160,16 +161,14 @@ hasPredicate = label "has predicate" $ noPossessive <|> possessive
 
 --- predicate parsing
 
-predicate :: (FTL (Formula -> Formula, Formula)
-          -> Parser st (Formula -> a, Formula))
+predicate :: (FTL (Formula -> Formula, Formula) -> Parser st (Formula -> a, Formula))
           -> Parser st a
 predicate p = (wdToken "not" >> negative) <|> positive
   where
     positive = do (q, f) <- p term; return $ q . Tag Dig $ f
     negative = do (q, f) <- p term; return $ q . Tag Dig . Not $ f
 
-mPredicate :: (FTL (Formula -> Formula, Formula)
-           -> Parser st (Formula -> a, Formula))
+mPredicate :: (FTL (Formula -> Formula, Formula) -> Parser st (Formula -> a, Formula))
            -> Parser st a
 mPredicate p = (wdToken "not" >> mNegative) <|> mPositive
   where

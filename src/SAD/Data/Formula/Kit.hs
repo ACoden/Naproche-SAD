@@ -198,7 +198,10 @@ zElem x m = zTrm elementId "aElementOf" [x,m]
 zProd m n = zTrm productId "szPzrzozdlpdtcmdtrp" [m, n]
 zPair x y = zTrm pairId "slpdtcmdtrp" [x,y]
 zObj      = zTrm objectId "aObj" . pure -- this is a dummy for parsing purposes
-
+zType     = zTrm typeId "aType" . pure
+zTypeClass = zTrm typeClassId "aTypeclass" . pure
+zInstance x m = zTrm instanceId "aInstanceOf" [x,m]
+zMethod x m = zTrm methodId "aMethodOf" [x,m]
 
 -- predefined identifier
 
@@ -213,7 +216,11 @@ elementId     =  -8 :: Int
 productId     =  -9 :: Int
 pairId        = -10 :: Int
 objectId      = -11 :: Int
-newId         = -15 :: Int -- temporary id given to newly introduced symbols
+typeId        = -12 :: Int
+typeClassId   = -13 :: Int
+instanceId    = -14 :: Int
+methodId      = -15 :: Int
+newId         = -16 :: Int -- temporary id given to newly introduced symbols
 
 
 -- quick checks of syntactic properties

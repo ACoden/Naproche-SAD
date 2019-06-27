@@ -39,6 +39,7 @@ type UNotion = (Formula -> Formula, Formula, VarName)
 type MTerm   = (Formula -> Formula, [Formula])
 type MNotion = (Formula -> Formula, Formula, [VarName])
 
+-- Primitive notions?
 type Prim    = ([Patt], [Formula] -> Formula)
 
 type VarName = (String, SourcePos)
@@ -75,9 +76,13 @@ initFS = FState
         Iff (zElem (zVar "") m) (zElem (zVar "") n)) ]
     sn = [ ([Symbol "=", Variable], zTrm (-1) "=") ]
     nt = [
+      ([Word ["type","types"], Numeric], zType . head),
+      ([Word ["typeclass","typeclasses"], Numeric], zTypeClass . head),
       ([Word ["function","functions"], Numeric], zFun . head),
       ([Word ["set","sets"], Numeric], zSet . head),
       ([Word ["element", "elements"], Numeric, Word ["of"], Variable], \(x:m:_) -> zElem x m),
+      ([Word ["instance","instances"], Numeric, Word ["of"], Variable], \(x:m:_)-> zInstance x m),
+      ([Word ["method","methods"], Numeric, Word ["of"], Variable], \(x:m:_)-> zMethod x m),
       ([Word ["object", "objects"], Numeric], zObj . head)]
     rf = [ ([Symbol "[", Variable, Symbol "]"], \(f:x:_) -> zApp f x)]
     cf = [

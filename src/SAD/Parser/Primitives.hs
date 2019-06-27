@@ -75,6 +75,7 @@ word :: Parser st String
 word = satisfy $ \tk -> all isAlpha tk
 
 ---- check if the current token is equal to s after mapping to lowercase
+--  void :: (Monad m) => m a -> m () comes from Control.Monad
 {-# INLINE wdToken #-}
 wdToken :: String -> Parser st ()
 wdToken s = void $ satisfy $ \tk -> s == map toLower tk

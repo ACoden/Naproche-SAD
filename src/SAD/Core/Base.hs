@@ -286,11 +286,18 @@ initialDefinitions = IM.fromList [
   (-6,  domain),
   (-7,  set),
   (-8,  elementOf),
-  (-10, pair) ]
+  (-9,  typeclass),
+  (-10, pair), 
+  (-11, instanceOf)]
 
 equality  = DE [] Top Signature (zEqu (zVar "?0") (zVar "?1")) [] []
 less      = DE [] Top Signature (zLess (zVar "?0") (zVar "?1")) [] []
 set       = DE [] Top Signature (zSet $ zVar "?0") [] []
+typeclass = DE [] Top Signature (zTypeClass $ zVar "?0") [] []
+instanceOf = DE [] Top Signature 
+  (zInstance (zVar "?0") (zVar "?1")) [] [[zTypeClass $ zVar "?1"]]
+methodOf = DE [] Top Signature 
+  (zMethod (zVar "?0") (zVar "?1")) [] [[zTypeClass $ zVar "?1"]]
 elementOf = DE [zSet $ zVar "?1"] Top Signature
   (zElem (zVar "?0") (zVar "?1")) [] [[zSet $ zVar "?1"]]
 function  = DE [] Top Signature (zFun $ zVar "?0") [] []
